@@ -28,6 +28,7 @@ func main() {
 		registered: make(map[string]func(*State, Command) error),
 	}
 	cmds.Register("login", handlerLogin)
+	cmds.Register("register", handlerRegister)
 	args := os.Args[1:]
 	if len(args) < 2 {
 		log.Fatal("expected at least 2 arguments")
