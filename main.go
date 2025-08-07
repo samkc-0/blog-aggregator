@@ -29,9 +29,11 @@ func main() {
 	}
 	cmds.Register("login", handlerLogin)
 	cmds.Register("register", handlerRegister)
+	cmds.Register("users", handleUsers)
+	cmds.Register("reset", handlerReset)
 	args := os.Args[1:]
-	if len(args) < 2 {
-		log.Fatal("expected at least 2 arguments")
+	if len(args) < 1 {
+		log.Fatal("expected at least 1 command")
 	}
 	cmd := Command{Name: args[0], Args: args[1:]}
 	if err := cmds.Run(&state, cmd); err != nil {

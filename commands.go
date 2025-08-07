@@ -77,3 +77,38 @@ func handlerRegister(state *State, cmd Command) error {
 	fmt.Printf("created and logged in as user %s\n", username)
 	return nil
 }
+
+func handleUsers(state *State, cmd Command) error {
+	if cmd.Name != "users" {
+		return fmt.Errorf("expected users command, got %s", cmd.Name)
+	}
+	if len(cmd.Args) != 0 {
+		return fmt.Errorf("users command expected 0 arguments, got %d arguments", len(cmd.Args))
+	}
+	users, err := state.db.GetUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("error getting all users")
+	}
+	for _, user := range users {
+		if user.Name == state.cfg.CurrentUsername {
+			fmt.Println(user.Name, "(current)")
+			continue
+		}
+		fmt.Println(user.Name)
+	}
+	return nil
+}
+
+func handlerReset(state *State, cmd Command) error {
+	if cmd.Name != "reset" {
+		return fmt.Errorf("expected reset command, got %s", cmd.Name)
+	}
+	if len(cmd.Args) != 0 {
+		return fmt.Errorf("reset command expected 0 arguments, got %d arguments", len(cmd.Args))
+	}
+	if err := state.db.DeleteAllUsers(context.Background()); err != nil {
+		return err
+	}
+	fmt.Println("users table reset")
+	return nil
+}
