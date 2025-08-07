@@ -1,7 +1,7 @@
 -- +goose Up
 create table users (
-  id bigserial primary key,
-  name varchar(64) not null,
+  id uuid primary key,
+  name text not null unique,
   created_at timestamp not null,
   updated_at timestamp not null
 );

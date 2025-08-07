@@ -1,19 +1,29 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"os"
 
+	_ "github.com/lib/pq"
 	"github.com/samkc-0/gator/internal/config"
+	"github.com/samkc-0/gator/internal/database"
 )
 
 type State struct {
 	cfg *config.Config
+	db  *database.Queries
 }
 
 func main() {
 	cfg := config.Read()
-	state := State{cfg: &cfg}
+	db, err := sql.Open("postgres", cfg.DbUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	queries := database.New(db)
+	state := State{cfg: &cfg, db: queries}
+
 	cmds := Commands{
 		registered: make(map[string]func(*State, Command) error),
 	}
