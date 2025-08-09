@@ -125,3 +125,42 @@ func handlerAgg(_ *State, cmd Command) error {
 	fmt.Println(feed)
 	return nil
 }
+
+func handlerAddfeed(state *State, cmd Command) error {
+	if cmd.Name != "addfeed" {
+		return fmt.Errorf("expected addfeed command, got %s", cmd.Name)
+	}
+	if len(cmd.Args) != 2 {
+		return fmt.Errorf("addfeed command expected 2 argument (name, url), got %d", len(cmd.Args))
+	}
+	name := cmd.Args[0]
+	url := cmd.Args[1]
+	fmt.Printf("fetching feed: %s\n", url)
+	feed, err := fetchFeed(context.Background(), url)
+	if err != nil {
+		return err
+	}
+	currentTime := time.Now()
+	currentUserId := getCurrentUserId(state)
+	params := database.CreateFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: currentTime,
+		UpdatedAt: currentTime,
+		Name:      name,
+		Url:       url,
+		UserID:    currentUserId,
+	}
+	if _, err := state.db.CreateFeed(context.Background(), params); err != nil {
+		return fmt.Errorf("failed to create feed entry for fedd with title: %s", feed.Channel.Title)
+	}
+	fmt.Printf("added feed '%s' to db as '%s'\n", feed.Channel.Title, name)
+	return nil
+}
+
+func getCurrentUserId(state *State) uuid.UUID {
+	user, err := state.db.GetUser(context.Background(), state.cfg.CurrentUsername)
+	if err != nil {
+		log.Fatal("something went wrong trying to get the current user id. There mayb be no current user. Check with 'gator users'")
+	}
+	return user.ID
+}

@@ -27,11 +27,14 @@ func main() {
 	cmds := Commands{
 		registered: make(map[string]func(*State, Command) error),
 	}
+
 	cmds.Register("login", handlerLogin)
 	cmds.Register("register", handlerRegister)
 	cmds.Register("users", handleUsers)
 	cmds.Register("reset", handlerReset)
 	cmds.Register("agg", handlerAgg)
+	cmds.Register("addfeed", handlerAddfeed)
+
 	args := os.Args[1:]
 	if len(args) < 1 {
 		log.Fatal("expected at least 1 command")
