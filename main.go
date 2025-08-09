@@ -31,6 +31,7 @@ func main() {
 	cmds.Register("register", handlerRegister)
 	cmds.Register("users", handleUsers)
 	cmds.Register("reset", handlerReset)
+	cmds.Register("agg", handlerAgg)
 	args := os.Args[1:]
 	if len(args) < 1 {
 		log.Fatal("expected at least 1 command")

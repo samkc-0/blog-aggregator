@@ -112,3 +112,16 @@ func handlerReset(state *State, cmd Command) error {
 	fmt.Println("users table reset")
 	return nil
 }
+
+func handlerAgg(_ *State, cmd Command) error {
+	if cmd.Name != "agg" {
+		return fmt.Errorf("expected agg command, got %s", cmd.Name)
+	}
+	url := "https://www.wagslane.dev/index.xml"
+	feed, err := fetchFeed(context.Background(), url)
+	if err != nil {
+		return err
+	}
+	fmt.Println(feed)
+	return nil
+}
