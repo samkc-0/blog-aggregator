@@ -14,3 +14,10 @@ insert into feeds (
 -- name: GetFeed :one
 select * from feeds
 where id = $1 limit 1;
+
+-- name: GetFeedByUrl :one
+select * from feeds
+where url = $1 limit 1;
+
+-- name: GetFeeds :many
+select * from feeds;

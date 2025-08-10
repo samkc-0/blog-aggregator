@@ -154,6 +154,70 @@ func handlerAddfeed(state *State, cmd Command) error {
 		return fmt.Errorf("failed to create feed entry for fedd with title: %s", feed.Channel.Title)
 	}
 	fmt.Printf("added feed '%s' to db as '%s'\n", feed.Channel.Title, name)
+	if err = handlerFollow(state, Command{Name: "follow", Args: []string{url}}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func handlerFeeds(state *State, cmd Command) error {
+	if cmd.Name != "feeds" {
+		return fmt.Errorf("expected feeds command, got %s", cmd.Name)
+	}
+	feeds, err := state.db.GetFeeds(context.Background())
+	if err != nil {
+		return fmt.Errorf("error getting all users")
+	}
+	for _, feed := range feeds {
+		feed_user, err := state.db.GetUserByID(context.Background(), feed.UserID)
+		if err != nil {
+			return fmt.Errorf("failed to get user for feed %s with user_id=%v", feed.Name, feed.UserID)
+		}
+		fmt.Printf("%s / %s / %s\n", feed.Name, feed_user.Name, feed.Url)
+	}
+	return nil
+}
+
+func handlerFollow(state *State, cmd Command) error {
+	if cmd.Name != "follow" {
+		return fmt.Errorf("expected follow command, got %s", cmd.Name)
+	}
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf("follow command expected 1 argument (feed url), got %d", len(cmd.Args))
+	}
+
+	url := cmd.Args[0]
+
+	feed, err := state.db.GetFeedByUrl(context.Background(), url)
+	if err != nil {
+		return fmt.Errorf("feed with url %s not found. add it with addfeed <url>", url)
+	}
+
+	currentTime := time.Now()
+	user_id := getCurrentUserId(state)
+	follow_params := database.CreateFeedFollowParams{
+		CreatedAt: currentTime,
+		UpdatedAt: currentTime,
+		FeedID:    feed.ID,
+		UserID:    user_id,
+	}
+
+	if _, err := state.db.CreateFeedFollow(context.Background(), follow_params); err != nil {
+		return err
+	}
+	fmt.Printf("user %s is now following %s\n", state.cfg.CurrentUsername, feed.Name)
+	return nil
+}
+
+func handlerFollowing(state *State, cmd Command) error {
+	user_id := getCurrentUserId(state)
+	following, err := state.db.GetFeedFollowsForUser(context.Background(), user_id)
+	if err != nil {
+		return err
+	}
+	for _, feed := range following {
+		fmt.Println(feed.Name)
+	}
 	return nil
 }
 
