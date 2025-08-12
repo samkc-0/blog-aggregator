@@ -228,3 +228,7 @@ func getCurrentUserId(state *State) uuid.UUID {
 	}
 	return user.ID
 }
+
+middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {
+	return nil
+}
