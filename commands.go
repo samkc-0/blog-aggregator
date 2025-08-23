@@ -126,7 +126,7 @@ func handlerAgg(_ *State, cmd Command) error {
 	return nil
 }
 
-func handlerAddfeed(state *State, cmd Command) error {
+func handlerAddfeed(state *State, cmd Command, user database.User) error {
 	if cmd.Name != "addfeed" {
 		return fmt.Errorf("expected addfeed command, got %s", cmd.Name)
 	}
@@ -141,20 +141,19 @@ func handlerAddfeed(state *State, cmd Command) error {
 		return err
 	}
 	currentTime := time.Now()
-	currentUserId := getCurrentUserId(state)
 	params := database.CreateFeedParams{
 		ID:        uuid.New(),
 		CreatedAt: currentTime,
 		UpdatedAt: currentTime,
 		Name:      name,
 		Url:       url,
-		UserID:    currentUserId,
+		UserID:    user.ID,
 	}
 	if _, err := state.db.CreateFeed(context.Background(), params); err != nil {
 		return fmt.Errorf("failed to create feed entry for fedd with title: %s", feed.Channel.Title)
 	}
 	fmt.Printf("added feed '%s' to db as '%s'\n", feed.Channel.Title, name)
-	if err = handlerFollow(state, Command{Name: "follow", Args: []string{url}}); err != nil {
+	if err = handlerFollow(state, Command{Name: "follow", Args: []string{url}}, user); err != nil {
 		return err
 	}
 	return nil
@@ -178,7 +177,7 @@ func handlerFeeds(state *State, cmd Command) error {
 	return nil
 }
 
-func handlerFollow(state *State, cmd Command) error {
+func handlerFollow(state *State, cmd Command, user database.User) error {
 	if cmd.Name != "follow" {
 		return fmt.Errorf("expected follow command, got %s", cmd.Name)
 	}
@@ -194,12 +193,11 @@ func handlerFollow(state *State, cmd Command) error {
 	}
 
 	currentTime := time.Now()
-	user_id := getCurrentUserId(state)
 	follow_params := database.CreateFeedFollowParams{
 		CreatedAt: currentTime,
 		UpdatedAt: currentTime,
 		FeedID:    feed.ID,
-		UserID:    user_id,
+		UserID:    user.ID,
 	}
 
 	if _, err := state.db.CreateFeedFollow(context.Background(), follow_params); err != nil {
@@ -209,9 +207,8 @@ func handlerFollow(state *State, cmd Command) error {
 	return nil
 }
 
-func handlerFollowing(state *State, cmd Command) error {
-	user_id := getCurrentUserId(state)
-	following, err := state.db.GetFeedFollowsForUser(context.Background(), user_id)
+func handlerFollowing(state *State, cmd Command, user database.User) error {
+	following, err := state.db.GetFeedFollowsForUser(context.Background(), user.ID)
 	if err != nil {
 		return err
 	}
@@ -221,14 +218,13 @@ func handlerFollowing(state *State, cmd Command) error {
 	return nil
 }
 
-func getCurrentUserId(state *State) uuid.UUID {
-	user, err := state.db.GetUser(context.Background(), state.cfg.CurrentUsername)
-	if err != nil {
-		log.Fatal("something went wrong trying to get the current user id. There mayb be no current user. Check with 'gator users'")
+func middlewareLoggedIn(handler func(s *State, cmd Command, user database.User) error) func(*State, Command) error {
+	return func(s *State, cmd Command) error {
+		user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUsername)
+		if err != nil {
+			return err
+		}
+		handler(s, cmd, user)
+		return nil
 	}
-	return user.ID
-}
-
-middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {
-	return nil
 }
