@@ -218,6 +218,29 @@ func handlerFollowing(state *State, cmd Command, user database.User) error {
 	return nil
 }
 
+func handlerUnfollow(state *State, cmd Command, user database.User) error {
+	if cmd.Name != "unfollow" {
+		return fmt.Errorf("expected 'unfollow' command, but got %s", cmd.Name)
+	}
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf("unfollow command expected 1 argument (feed url), got %d", len(cmd.Args))
+	}
+	url := cmd.Args[0]
+	feed, err := state.db.GetFeedByUrl(context.Background(), url)
+	if err != nil {
+		return fmt.Errorf("no feed found with url: %s", url)
+	}
+	params := database.DeleteFeedFollowsForUserParams{
+		UserID: user.ID,
+		FeedID: feed.ID,
+	}
+	if err := state.db.DeleteFeedFollowsForUser(context.Background(), params); err != nil {
+		return err
+	}
+	fmt.Printf("user %s no longer follows feed %s", state.cfg.CurrentUsername, feed.Name)
+	return nil
+}
+
 func middlewareLoggedIn(handler func(s *State, cmd Command, user database.User) error) func(*State, Command) error {
 	return func(s *State, cmd Command) error {
 		user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUsername)

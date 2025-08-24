@@ -15,3 +15,7 @@ join feeds on follows.feed_id = feeds.id;
 select *, feeds.name as name from feed_follows
 join feeds on feed_follows.feed_id = feeds.id
 where feed_follows.user_id = $1;
+
+-- name: DeleteFeedFollowsForUser :exec
+delete from feed_follows
+where feed_follows.user_id = $1 and feed_follows.feed_id = $2; 
