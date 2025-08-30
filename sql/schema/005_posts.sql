@@ -1,7 +1,7 @@
 -- +goose Up
 create table posts (
   id uuid primary key,
-  created_at timestamp not null,
+  created_at timestamp not null default now(),
   updated_at timestamp,
   title text not null,
   url text unique not null,
