@@ -56,7 +56,14 @@ select id, posts.created_at, posts.updated_at, title, url, description, publishe
 inner join feed_follows on
   posts.feed_id = feed_follows.feed_id
 where feed_follows.user_id = $1
+order by posts.published_at desc
+limit $2
 `
+
+type GetPostsForUserParams struct {
+	UserID uuid.UUID
+	Limit  int32
+}
 
 type GetPostsForUserRow struct {
 	ID          uuid.UUID
@@ -73,8 +80,8 @@ type GetPostsForUserRow struct {
 	FeedID_2    uuid.UUID
 }
 
-func (q *Queries) GetPostsForUser(ctx context.Context, userID uuid.UUID) ([]GetPostsForUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPostsForUser, userID)
+func (q *Queries) GetPostsForUser(ctx context.Context, arg GetPostsForUserParams) ([]GetPostsForUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPostsForUser, arg.UserID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

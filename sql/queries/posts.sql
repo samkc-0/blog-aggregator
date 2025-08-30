@@ -9,4 +9,6 @@ insert into posts (
 select * from posts
 inner join feed_follows on
   posts.feed_id = feed_follows.feed_id
-where feed_follows.user_id = $1;
+where feed_follows.user_id = $1
+order by posts.published_at desc
+limit $2;
