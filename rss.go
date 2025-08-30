@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"log"
 	"net/http"
 	"time"
 )
@@ -64,5 +65,23 @@ func (f *RSSFeed) UnescapeString() {
 		item.Title = html.UnescapeString(item.Title)
 		item.Description = html.UnescapeString(item.Description)
 		f.Channel.Item[i] = item
+	}
+}
+
+func scrapeFeeds(s *State) {
+	nextFeed, err := s.db.GetNextFeedToFetch(context.Background())
+	if err != nil {
+		log.Fatalf("failed to scrape feeds: %v", err)
+	}
+	if err := s.db.MarkFeedFetched(context.Background(), nextFeed.ID); err != nil {
+		log.Fatalf("failed to mark feed as fetched: %v", err)
+	}
+	feed, err := fetchFeed(context.Background(), nextFeed.Url)
+	if err != nil {
+		fmt.Printf("could not fetch %s from url '%s'\n", nextFeed.Name, nextFeed.Url)
+		return
+	}
+	for _, item := range feed.Channel.Item {
+		fmt.Println(item.Title)
 	}
 }

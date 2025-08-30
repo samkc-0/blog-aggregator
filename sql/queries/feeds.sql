@@ -21,3 +21,15 @@ where url = $1 limit 1;
 
 -- name: GetFeeds :many
 select * from feeds;
+
+-- name: MarkFeedFetched :exec
+update feeds
+set
+last_fetched_at = now(),
+updated_at = now()
+where id = $1;
+
+-- name: GetNextFeedToFetch :one
+select * from feeds
+order by last_fetched_at nulls first
+limit 1;

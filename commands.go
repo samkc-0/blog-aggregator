@@ -113,17 +113,22 @@ func handlerReset(state *State, cmd Command) error {
 	return nil
 }
 
-func handlerAgg(_ *State, cmd Command) error {
+func handlerAgg(state *State, cmd Command) error {
 	if cmd.Name != "agg" {
 		return fmt.Errorf("expected agg command, got %s", cmd.Name)
 	}
-	url := "https://www.wagslane.dev/index.xml"
-	feed, err := fetchFeed(context.Background(), url)
-	if err != nil {
-		return err
+	if len(cmd.Args) != 1 {
+		return fmt.Errorf("reset command expected 1 argument (time between reqs), got %d arguments", len(cmd.Args))
 	}
-	fmt.Println(feed)
-	return nil
+	timeBetweenRequests, err := time.ParseDuration(cmd.Args[0])
+	if err != nil {
+		return fmt.Errorf("failed to parse 'time between reqs' argument. is it a valid time duration string? (e.g. 1s, 1m, 1h)")
+	}
+	fmt.Printf("collecting feeds every %s\n", timeBetweenRequests)
+	ticker := time.NewTicker(timeBetweenRequests)
+	for ; ; <-ticker.C {
+		scrapeFeeds(state)
+	}
 }
 
 func handlerAddfeed(state *State, cmd Command, user database.User) error {
@@ -247,7 +252,9 @@ func middlewareLoggedIn(handler func(s *State, cmd Command, user database.User) 
 		if err != nil {
 			return err
 		}
-		handler(s, cmd, user)
+		if err := handler(s, cmd, user); err != nil {
+			return err
+		}
 		return nil
 	}
 }
