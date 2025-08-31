@@ -1,8 +1,8 @@
 -- name: CreatePost :one
 insert into posts (
-  title, url, description, published_at, feed_id
+  id, title, url, description, published_at, feed_id
 ) values (
-  $1, $2, $3, $4, $5
+  $1, $2, $3, $4, $5, $6
 ) returning *;
 
 -- name: GetPostsForUser :many

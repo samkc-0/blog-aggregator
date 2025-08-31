@@ -15,13 +15,14 @@ import (
 
 const createPost = `-- name: CreatePost :one
 insert into posts (
-  title, url, description, published_at, feed_id
+  id, title, url, description, published_at, feed_id
 ) values (
-  $1, $2, $3, $4, $5
+  $1, $2, $3, $4, $5, $6
 ) returning id, created_at, updated_at, title, url, description, published_at, feed_id
 `
 
 type CreatePostParams struct {
+	ID          uuid.UUID
 	Title       string
 	Url         string
 	Description string
@@ -31,6 +32,7 @@ type CreatePostParams struct {
 
 func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (Post, error) {
 	row := q.db.QueryRowContext(ctx, createPost,
+		arg.ID,
 		arg.Title,
 		arg.Url,
 		arg.Description,

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"fmt"
 	"html"
@@ -9,6 +10,9 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/samkc-0/gator/internal/database"
 )
 
 type RSSFeed struct {
@@ -82,6 +86,33 @@ func scrapeFeeds(s *State) {
 		return
 	}
 	for _, item := range feed.Channel.Item {
-		fmt.Println(item.Title)
+		if err := s.savePostToDb(item, nextFeed.ID); err != nil {
+			fmt.Printf("could not save item '%s' to db: %v\n", item.Title, err)
+			fmt.Println("maybe it already exists")
+			fmt.Println("---")
+		}
 	}
+}
+
+func (s *State) savePostToDb(r RSSItem, feedID uuid.UUID) error {
+	pubDate, err := time.Parse(time.RFC3339, r.PubDate)
+	pubDateAsNullTime := sql.NullTime{}
+	if err != nil {
+		pubDateAsNullTime.Time = pubDate
+		pubDateAsNullTime.Valid = true
+	}
+	params := database.CreatePostParams{
+		ID:          uuid.New(),
+		Title:       r.Title,
+		Url:         r.Link,
+		Description: r.Description,
+		PublishedAt: pubDateAsNullTime,
+		FeedID:      feedID,
+	}
+	post, err := s.db.CreatePost(context.Background(), params)
+	if err != nil {
+		return fmt.Errorf("post '%s' (%s): %v", r.Title, r.Link, err)
+	}
+	fmt.Printf("saved post:\n%s\n%s\n---\n", post.Title, post.Url)
+	return nil
 }
