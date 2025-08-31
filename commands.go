@@ -270,10 +270,14 @@ func handlerBrowse(state *State, cmd Command, user database.User) error {
 		UserID: user.ID,
 		Limit:  limit,
 	}
-
+	fmt.Printf("attempting to fetch posts for user %s...\n", user.Name)
 	posts, err := state.db.GetPostsForUser(context.Background(), params)
 	if err != nil {
-		return fmt.Errorf("error fetching posts for user: %s", user.Name)
+		return fmt.Errorf("error fetching posts: %v", err)
+	}
+
+	if len(posts) == 0 {
+		fmt.Println("(no posts found)")
 	}
 
 	for _, p := range posts {
