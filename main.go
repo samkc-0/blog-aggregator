@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -42,10 +43,16 @@ func main() {
 
 	args := os.Args[1:]
 	if len(args) < 1 {
-		log.Fatal("expected at least 1 command")
+		fmt.Println("usage: rss-aggregator <command>\n")
+		for name := range cmds.registered {
+			fmt.Println(name)
+		}
+		os.Exit(1)
+		fmt.Println()
 	}
 	cmd := Command{Name: args[0], Args: args[1:]}
 	if err := cmds.Run(&state, cmd); err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 }
