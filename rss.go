@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -87,9 +88,10 @@ func scrapeFeeds(s *State) {
 	}
 	for _, item := range feed.Channel.Item {
 		if err := s.savePostToDb(item, nextFeed.ID); err != nil {
-			fmt.Printf("could not save item '%s' to db: %v\n", item.Title, err)
-			fmt.Println("maybe it already exists")
-			fmt.Println("---")
+			if strings.Contains(err.Error(), "duplicate key") {
+				continue
+			}
+			fmt.Printf("could not save item '%s' to db: %v\n---\n", item.Title, err)
 		}
 	}
 }
