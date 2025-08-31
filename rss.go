@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/samkc-0/gator/internal/database"
+	"github.com/samkc-0/rss-aggregator/internal/database"
 )
 
 type RSSFeed struct {

@@ -1,4 +1,4 @@
-module github.com/samkc-0/gator
+module github.com/samkc-0/rss-aggregator
 
 go 1.22.4
 

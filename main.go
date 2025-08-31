@@ -6,8 +6,8 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
-	"github.com/samkc-0/gator/internal/config"
-	"github.com/samkc-0/gator/internal/database"
+	"github.com/samkc-0/rss-aggregator/internal/config"
+	"github.com/samkc-0/rss-aggregator/internal/database"
 )
 
 type State struct {
