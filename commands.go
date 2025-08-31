@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -243,6 +244,45 @@ func handlerUnfollow(state *State, cmd Command, user database.User) error {
 		return err
 	}
 	fmt.Printf("user %s no longer follows feed %s", state.cfg.CurrentUsername, feed.Name)
+	return nil
+}
+func handlerBrowse(state *State, cmd Command, user database.User) error {
+	if cmd.Name != "browse" {
+		return fmt.Errorf("expected command do be 'browse' but got '%s'", cmd.Name)
+	}
+
+	if len(cmd.Args) > 1 {
+		return fmt.Errorf("usage: browse [limit]\n(got %d arguments, expected 1 or none)\n", len(cmd.Args))
+	}
+	var limit int32
+	if len(cmd.Args) == 1 {
+		parsed, err := strconv.Atoi(cmd.Args[0])
+		limit = int32(parsed)
+		if err != nil {
+			return fmt.Errorf("error converting %v to int: %v", cmd.Args[0], err)
+		}
+	}
+	if len(cmd.Args) == 0 {
+		limit = 2
+	}
+
+	params := database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  limit,
+	}
+
+	posts, err := state.db.GetPostsForUser(context.Background(), params)
+	if err != nil {
+		return fmt.Errorf("error fetching posts for user: %s", user.Name)
+	}
+
+	for _, p := range posts {
+		fmt.Println(p.Title)
+		fmt.Println()
+		fmt.Println(p.Description)
+		fmt.Println(p.Url)
+		fmt.Println("---")
+	}
 	return nil
 }
 
